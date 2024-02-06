@@ -4,7 +4,7 @@ const axios = require('axios');
 const puppeteer = require('puppeteer');
 const express = require('express');
 const functions = require('firebase-functions');
-const chromium = require('chrome-aws-lambda');
+// const chromium = require('chrome-aws-lambda');
 // const puppeteer = require('puppeteer-core');
 
 const app = express();
@@ -253,54 +253,49 @@ try {
 }
 
 async function scrapeCommentsOnlyTen(videoUrl) {
-    // puppeteer를 사용하여 브라우저 인스턴스를 실행합니다.
-    const browser = await puppeteer.launch({
-        headless: true, // headless 모드 활성화
-        args: ['--no-sandbox', '--disable-setuid-sandbox'], // Amazon Linux에서 실행 시 필요한 추가 옵션,
-        protocolTimeout: 600000, // 60초로 프로토콜 타임아웃 설정
-    });
-    console.log("get here");
+    let driver = await new Builder()
+        .forBrowser('chrome')
+        .setChromeOptions(new chrome.Options().headless()) // 여기를 수정
+        .build();
 
-    const page = await browser.newPage();
-    console.log("get here2");
-    await page.goto(videoUrl, { waitUntil: 'networkidle2', timeout: 600000 });
-    console.log("get here3");
-    await autoScroll(page);
+let count = 0;
+let results = new Array();
+try {
+    // YouTube 동영상 페이지로 이동
+    await driver.get(videoUrl);
 
-    // 페이지 내에서 댓글을 추출합니다.
-    const comments = await page.evaluate(() => {
-        const commentsArray = [];
-        const commentElements = document.querySelectorAll('#content-text');
-        console.log("let's say comment is");
-        console.log(commentElements);
-        for (let i = 0; i < commentElements.length && i < 10; i++) { // 최대 10개의 댓글만 추출
-            commentsArray.push(commentElements[i].innerText);
+    // 페이지가 로드될 때까지 기다림
+    await driver.wait(until.elementLocated(By.tagName('body')), 10000);
+
+    // 스크롤 다운하여 댓글을 더 로드
+    let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
+    while (true) {
+        await driver.executeScript('window.scrollTo(0, document.documentElement.scrollHeight);');
+        await driver.sleep(1000); // 기다리는 시간은 상황에 따라 조정
+        let newHeight = await driver.executeScript('return document.documentElement.scrollHeight');
+        if (newHeight === lastHeight) {
+            break;
         }
-        return commentsArray;
-    });
+        lastHeight = newHeight;
+    }
 
-    await browser.close();
-    return comments;
+    // 댓글 추출
+    let comments = await driver.findElements(By.id('content-text'));
+    for (let comment of comments) {
+        let commentText = await comment.getText();
+        results.push(commentText);
+        count++;
+        if(count >= 100) break;
+        // console.log(commentText);
+    }
+} finally {
+    // 드라이버 종료
+    console.log(count);
+    
+    await driver.quit();
+    return results;
+}
 }
 
-async function autoScroll(page) {
-    await page.evaluate(async () => {
-        await new Promise((resolve, reject) => {
-            let totalHeight = 0;
-            const distance = 10; // 스크롤할 때마다 이동할 거리를 조금 늘렸습니다.
-            const timer = setInterval(() => {
-                const scrollHeight = document.documentElement.scrollHeight;
-                window.scrollBy(0, distance);
-                totalHeight += distance;
-                console.log("scrolling");
-
-                if (totalHeight >= scrollHeight) {
-                    clearInterval(timer);
-                    resolve();
-                }
-            }, 100);
-        });
-    });
-}
 
 // exports.api = functions.https.onRequest(app);
