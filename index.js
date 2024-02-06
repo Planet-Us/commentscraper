@@ -36,7 +36,6 @@ const server = app.listen(process.env.PORT || '3001', () => {
 });
 
 const getYTComment = async (ytSearch) =>{
-    const apiKey = 'AIzaSyBcEMoyxi2qHWcKjX1_Cw7oQuWj4AsWdOs';
     let tempComments = new Array();
     let tempVideoURLs = new Array();
     let channelId = "UCeAQsCuhMxAowmOa_Rl1oTw";

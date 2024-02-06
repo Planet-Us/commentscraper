@@ -59,7 +59,6 @@ exports.hello = functions.https.onRequest((request, response) => {
 });
 
 const getYTComment = async (ytSearch) =>{
-    const apiKey = 'AIzaSyBcEMoyxi2qHWcKjX1_Cw7oQuWj4AsWdOs';
     let tempComments = new Array();
     let tempVideoURLs = new Array();
     let channelId = "UCeAQsCuhMxAowmOa_Rl1oTw";
