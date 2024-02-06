@@ -258,6 +258,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
         headless: true, // headless 모드 활성화
         args: ['--no-sandbox', '--disable-setuid-sandbox'] // Amazon Linux에서 실행 시 필요한 추가 옵션
     });
+    console.log("get here");
 
     const page = await browser.newPage();
     await page.goto(videoUrl, { waitUntil: 'domcontentloaded', timeout: 300000 });
@@ -267,6 +268,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
     const comments = await page.evaluate(() => {
         const commentsArray = [];
         const commentElements = document.querySelectorAll('#content-text');
+        console.log(commentElements);
         for (let i = 0; i < commentElements.length && i < 10; i++) { // 최대 10개의 댓글만 추출
             commentsArray.push(commentElements[i].innerText);
         }
