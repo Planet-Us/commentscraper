@@ -1,9 +1,11 @@
 const { Builder, By, Key, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 const axios = require('axios');
-const puppeteer = require('puppeteer');
+// const puppeteer = require('puppeteer');
 const express = require('express');
 const functions = require('firebase-functions');
+const chromium = require('chrome-aws-lambda');
+const puppeteer = require('puppeteer-core');
 
 const app = express();
 
