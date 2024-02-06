@@ -284,11 +284,12 @@ async function autoScroll(page) {
     await page.evaluate(async () => {
         await new Promise((resolve, reject) => {
             let totalHeight = 0;
-            const distance = 100; // 스크롤할 때마다 이동할 거리를 조금 늘렸습니다.
+            const distance = 10; // 스크롤할 때마다 이동할 거리를 조금 늘렸습니다.
             const timer = setInterval(() => {
                 const scrollHeight = document.documentElement.scrollHeight;
                 window.scrollBy(0, distance);
                 totalHeight += distance;
+                console.log("scrolling");
 
                 if (totalHeight >= scrollHeight) {
                     clearInterval(timer);
