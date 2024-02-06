@@ -261,7 +261,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
     console.log("get here");
 
     const page = await browser.newPage();
-    await page.goto(videoUrl, { waitUntil: 'domcontentloaded', timeout: 300000 });
+    await page.goto(videoUrl, { waitUntil: 'networkidle2', timeout: 300000 });
     await autoScroll(page);
 
     // 페이지 내에서 댓글을 추출합니다.
