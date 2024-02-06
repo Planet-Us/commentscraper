@@ -253,24 +253,22 @@ try {
 }
 }
 
-
 async function scrapeCommentsOnlyTen(videoUrl) {
+    // puppeteer를 사용하여 브라우저 인스턴스를 실행합니다.
     const browser = await puppeteer.launch({
-        executablePath: await chromium.executablePath,
-        args: chromium.args,
-        headless: chromium.headless,
-        defaultViewport: chromium.defaultViewport,
+        headless: true, // headless 모드 활성화
+        args: ['--no-sandbox', '--disable-setuid-sandbox'] // Amazon Linux에서 실행 시 필요한 추가 옵션
     });
 
     const page = await browser.newPage();
     await page.goto(videoUrl, { waitUntil: 'domcontentloaded', timeout: 300000 });
     await autoScroll(page);
 
+    // 페이지 내에서 댓글을 추출합니다.
     const comments = await page.evaluate(() => {
         const commentsArray = [];
         const commentElements = document.querySelectorAll('#content-text');
-        for (let i = 0; i < commentElements.length; i++) {
-            // if (i >= 10) break; // 최대 10개의 댓글만 추출
+        for (let i = 0; i < commentElements.length && i < 10; i++) { // 최대 10개의 댓글만 추출
             commentsArray.push(commentElements[i].innerText);
         }
         return commentsArray;
@@ -280,12 +278,11 @@ async function scrapeCommentsOnlyTen(videoUrl) {
     return comments;
 }
 
-
 async function autoScroll(page) {
     await page.evaluate(async () => {
         await new Promise((resolve, reject) => {
             let totalHeight = 0;
-            const distance = 5;
+            const distance = 100; // 스크롤할 때마다 이동할 거리를 조금 늘렸습니다.
             const timer = setInterval(() => {
                 const scrollHeight = document.documentElement.scrollHeight;
                 window.scrollBy(0, distance);
