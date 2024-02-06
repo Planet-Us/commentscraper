@@ -257,13 +257,13 @@ async function scrapeCommentsOnlyTen(videoUrl) {
     const browser = await puppeteer.launch({
         headless: true, // headless 모드 활성화
         args: ['--no-sandbox', '--disable-setuid-sandbox'], // Amazon Linux에서 실행 시 필요한 추가 옵션,
-        protocolTimeout: 300000, // 60초로 프로토콜 타임아웃 설정
+        protocolTimeout: 600000, // 60초로 프로토콜 타임아웃 설정
     });
     console.log("get here");
 
     const page = await browser.newPage();
     console.log("get here2");
-    await page.goto(videoUrl, { waitUntil: 'networkidle2', timeout: 150000 });
+    await page.goto(videoUrl, { waitUntil: 'networkidle2', timeout: 600000 });
     console.log("get here3");
     await autoScroll(page);
 
