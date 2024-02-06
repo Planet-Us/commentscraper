@@ -257,7 +257,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
     const browser = await puppeteer.launch({
         headless: true, // headless 모드 활성화
         args: ['--no-sandbox', '--disable-setuid-sandbox'], // Amazon Linux에서 실행 시 필요한 추가 옵션,
-        protocolTimeout: 60000, // 60초로 프로토콜 타임아웃 설정
+        protocolTimeout: 300000, // 60초로 프로토콜 타임아웃 설정
     });
     console.log("get here");
 
