@@ -268,6 +268,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
     const comments = await page.evaluate(() => {
         const commentsArray = [];
         const commentElements = document.querySelectorAll('#content-text');
+        console.log("let's say comment is");
         console.log(commentElements);
         for (let i = 0; i < commentElements.length && i < 10; i++) { // 최대 10개의 댓글만 추출
             commentsArray.push(commentElements[i].innerText);
