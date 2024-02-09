@@ -31,7 +31,7 @@ app.get('/', async (req, res) => {
     res.send("hello");
 });
 
-const server = app.listen(process.env.PORT || '3001', () => {
+const server = app.listen(process.env.PORT || '3000', () => {
     console.log('server listening on port %s', server.address().port);
 });
 
