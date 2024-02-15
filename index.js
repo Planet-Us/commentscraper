@@ -254,50 +254,91 @@ try {
 }
 }
 
+// async function scrapeCommentsOnlyTen(videoUrl) {
+//     let driver = await new Builder()
+//         .forBrowser('chrome')
+//         .setChromeOptions(new chrome.Options().headless()) // 여기를 수정
+//         .build();
+
+// let count = 0;
+// let results = new Array();
+// try {
+//     // YouTube 동영상 페이지로 이동
+//     await driver.get(videoUrl);
+
+//     // 페이지가 로드될 때까지 기다림
+//     await driver.wait(until.elementLocated(By.tagName('body')), 10000);
+
+//     // 스크롤 다운하여 댓글을 더 로드
+//     let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
+//     while (true) {
+//         await driver.executeScript('window.scrollTo(0, document.documentElement.scrollHeight);');
+//         await driver.sleep(1000); // 기다리는 시간은 상황에 따라 조정
+//         let newHeight = await driver.executeScript('return document.documentElement.scrollHeight');
+//         if (newHeight === lastHeight) {
+//             break;
+//         }
+//         lastHeight = newHeight;
+//     }
+
+//     // 댓글 추출
+//     let comments = await driver.findElements(By.id('content-text'));
+//     for (let comment of comments) {
+//         let commentText = await comment.getText();
+//         results.push(commentText);
+//         count++;
+//         if(count >= 100) break;
+//         // console.log(commentText);
+//     }
+// } finally {
+//     // 드라이버 종료
+//     console.log(count);
+    
+//     await driver.quit();
+//     return results;
+// }
+// }
+
 async function scrapeCommentsOnlyTen(videoUrl) {
     let driver = await new Builder()
         .forBrowser('chrome')
-        .setChromeOptions(new chrome.Options().headless()) // 여기를 수정
+        .setChromeOptions(new chrome.Options().headless())
         .build();
 
-let count = 0;
-let results = new Array();
-try {
-    // YouTube 동영상 페이지로 이동
-    await driver.get(videoUrl);
+    let count = 0;
+    let results = [];
+    try {
+        await driver.get(videoUrl);
+        await driver.wait(until.elementLocated(By.tagName('body')), 10000);
 
-    // 페이지가 로드될 때까지 기다림
-    await driver.wait(until.elementLocated(By.tagName('body')), 10000);
-
-    // 스크롤 다운하여 댓글을 더 로드
-    let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
-    while (true) {
-        await driver.executeScript('window.scrollTo(0, document.documentElement.scrollHeight);');
-        await driver.sleep(1000); // 기다리는 시간은 상황에 따라 조정
-        let newHeight = await driver.executeScript('return document.documentElement.scrollHeight');
-        if (newHeight === lastHeight) {
-            break;
+        let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
+        while (true) {
+            await driver.executeScript('window.scrollTo(0, document.documentElement.scrollHeight);');
+            await driver.sleep(1000);
+            let newHeight = await driver.executeScript('return document.documentElement.scrollHeight');
+            if (newHeight === lastHeight) {
+                break;
+            }
+            lastHeight = newHeight;
         }
-        lastHeight = newHeight;
-    }
 
-    // 댓글 추출
-    let comments = await driver.findElements(By.id('content-text'));
-    for (let comment of comments) {
-        let commentText = await comment.getText();
-        results.push(commentText);
-        count++;
-        if(count >= 100) break;
-        // console.log(commentText);
-    }
-} finally {
-    // 드라이버 종료
-    console.log(count);
-    
-    await driver.quit();
-    return results;
-}
-}
+        // 댓글 작성자와 댓글 텍스트 추출
+        let commentsElements = await driver.findElements(By.xpath('//*[@id="content-text"]'));
+        for (let commentElement of commentsElements) {
+            let commentText = await commentElement.getText();
+            // 댓글 작성자 이름을 포함하는 상위 요소로 이동
+            let authorElement = await commentElement.findElement(By.xpath('./../../../*[@id="author-text"]'));
+            let authorName = await authorElement.getText();
 
+            results.push({author: authorName, comment: commentText});
+            count++;
+            if(count >= 100) break; // 최대 10개의 댓글만 추출
+        }
+    } finally {
+        console.log(count);
+        await driver.quit();
+        return results;
+    }
+}
 
 // exports.api = functions.https.onRequest(app);
