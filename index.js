@@ -4,10 +4,12 @@ const axios = require('axios');
 const puppeteer = require('puppeteer');
 const express = require('express');
 const functions = require('firebase-functions');
+const cors = require('cors');
 // const chromium = require('chrome-aws-lambda');
 // const puppeteer = require('puppeteer-core');
 
 const app = express();
+app.use(cors());
 
 app.get('/getComments', async (req, res) => {
     console.log(req.query);
