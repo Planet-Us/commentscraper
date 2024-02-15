@@ -305,7 +305,6 @@ async function scrapeCommentsOnlyTen(videoUrl) {
         .setChromeOptions(new chrome.Options().headless())
         .build();
 
-    let count = 0;
     let results = [];
     try {
         await driver.get(videoUrl);
@@ -322,20 +321,20 @@ async function scrapeCommentsOnlyTen(videoUrl) {
             lastHeight = newHeight;
         }
 
-        // 댓글 작성자와 댓글 텍스트 추출
-        let commentsElements = await driver.findElements(By.xpath('//*[@id="content-text"]'));
-        for (let commentElement of commentsElements) {
-            let commentText = await commentElement.getText();
-            // 댓글 작성자 이름을 포함하는 상위 요소로 이동
-            let authorElement = await commentElement.findElement(By.xpath('./../../../*[@id="author-text"]'));
-            let authorName = await authorElement.getText();
+        // 'ytd-comment-thread-renderer'를 기준으로 댓글 정보 추출
+        let commentThreads = await driver.findElements(By.tagName('ytd-comment-thread-renderer'));
+        for (let commentThread of commentThreads) {
+            // 댓글 작성자 정보 추출
+            let authorName = await commentThread.findElement(By.id('text')).getText();
+            
+            // 댓글 텍스트 추출
+            let commentText = await commentThread.findElement(By.id('content-text')).getText();
 
             results.push({author: authorName, comment: commentText});
-            count++;
-            if(count >= 100) break; // 최대 10개의 댓글만 추출
+            if(results.length >= 10) break; // 최대 10개의 댓글만 추출
         }
     } finally {
-        console.log(count);
+        console.log(`Extracted ${results.length} comments.`);
         await driver.quit();
         return results;
     }
