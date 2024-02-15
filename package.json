@@ -17,6 +17,7 @@
     "firebase-functions": "^4.2.0",
     "puppeteer": "^21.6.0",
     "puppeteer-core": "^10.4.0",
+    "react-json-to-csv": "^1.2.0",
     "selenium-webdriver": "^4.16.0"
   },
   "author": "",
