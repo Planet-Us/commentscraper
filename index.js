@@ -328,13 +328,16 @@ async function scrapeCommentsOnlyTen(videoUrl) {
         let authorNames = await driver.findElements(By.id('author-text'));
         console.log(comments.length);
         console.log(authorNames.length);
+        let count = 0;
         for (let i = 0;i<comments.length;i++) {
             let commentText = await comments[i].getText();
             let author = await authorNames[i].getText();
             console.log(commentText);
             console.log(author);
             results.push({author: authorName, comment: commentText});
-            if(results.length >= 100) break;
+            console.log(results.length);
+            count++;
+            if(count >= 100) {break;}
             console.log(commentText);
         }
         // let commentThreads = await driver.findElements(By.id('ytd-comment-renderer'));
