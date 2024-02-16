@@ -334,7 +334,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
             let author = await authorNames[i].getText();
             console.log(commentText);
             console.log(author);
-            results.push({author: authorName, comment: commentText});
+            results.push({author: author, comment: commentText});
             console.log(results.length);
             count++;
             if(count >= 100) {break;}
