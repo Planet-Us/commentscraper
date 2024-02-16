@@ -311,10 +311,12 @@ async function scrapeCommentsOnlyTen(videoUrl) {
         await driver.wait(until.elementLocated(By.tagName('ytd-comments')), 10000);
 
         let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
+        console.log("lastHeight is " + lastHeight);
         while (true) {
             await driver.executeScript('window.scrollTo(0, document.documentElement.scrollHeight);');
             await driver.sleep(1000);
             let newHeight = await driver.executeScript('return document.documentElement.scrollHeight');
+            console.log("newHeight is " + newHeight);
             if (newHeight === lastHeight) {
                 break;
             }
@@ -322,19 +324,28 @@ async function scrapeCommentsOnlyTen(videoUrl) {
         }
 
         // 'ytd-comment-thread-renderer'를 기준으로 댓글 정보 추출
-        let commentThreads = await driver.findElements(By.id('ytd-comment-renderer'));
-        console.log(commentThreads.length);
-        for (let commentThread of commentThreads) {
-            console.log(commentThread);
-            // 댓글 작성자 정보 추출
-            let authorName = await commentThread.findElement(By.id('author-text')).getText();
-            
-            // 댓글 텍스트 추출
-            let commentText = await commentThread.findElement(By.id('content-text')).getText();
-
+        let comments = await driver.findElements(By.id('content-text'));
+        let authorNames = await driver.findElements(By.id('author-text'));
+        for (let i = 0;i<comments.length;i++) {
+            let commentText = await comments[i].getText();
+            let author = await authorNames[i].getText();
             results.push({author: authorName, comment: commentText});
-            if(results.length >= 10) break; // 최대 10개의 댓글만 추출
+            if(results.length >= 100) break;
+            console.log(commentText);
         }
+        // let commentThreads = await driver.findElements(By.id('ytd-comment-renderer'));
+        // console.log(commentThreads.length);
+        // for (let commentThread of commentThreads) {
+        //     console.log(commentThread);
+        //     // 댓글 작성자 정보 추출
+        //     let authorName = await commentThread.findElement(By.id('author-text')).getText();
+            
+        //     // 댓글 텍스트 추출
+        //     let commentText = await commentThread.findElement(By.id('content-text')).getText();
+
+        //     results.push({author: authorName, comment: commentText});
+        //     if(results.length >= 10) break; // 최대 10개의 댓글만 추출
+        // }
     } finally {
         console.log(`Extracted ${results.length} comments.`);
         await driver.quit();
