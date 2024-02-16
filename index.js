@@ -308,7 +308,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
     let results = [];
     try {
         await driver.get(videoUrl);
-        await driver.wait(until.elementLocated(By.tagName('ytd-comments')), 10000);
+        await driver.wait(until.elementLocated(By.tagName('body')), 10000);
 
         let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
         console.log("lastHeight is " + lastHeight);
