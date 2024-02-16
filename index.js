@@ -326,9 +326,13 @@ async function scrapeCommentsOnlyTen(videoUrl) {
         // 'ytd-comment-thread-renderer'를 기준으로 댓글 정보 추출
         let comments = await driver.findElements(By.id('content-text'));
         let authorNames = await driver.findElements(By.id('author-text'));
+        console.log(comments.length);
+        console.log(authorNames.length);
         for (let i = 0;i<comments.length;i++) {
             let commentText = await comments[i].getText();
             let author = await authorNames[i].getText();
+            console.log(commentText);
+            console.log(author);
             results.push({author: authorName, comment: commentText});
             if(results.length >= 100) break;
             console.log(commentText);
