@@ -308,7 +308,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
     let results = [];
     try {
         await driver.get(videoUrl);
-        await driver.wait(until.elementLocated(By.tagName('body')), 10000);
+        await driver.wait(until.elementLocated(By.tagName('ytd-comments')), 10000);
 
         let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
         while (true) {
@@ -322,7 +322,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
         }
 
         // 'ytd-comment-thread-renderer'를 기준으로 댓글 정보 추출
-        let commentThreads = await driver.findElements(By.id('main'));
+        let commentThreads = await driver.findElements(By.id('ytd-comment-renderer'));
         console.log(commentThreads.length);
         for (let commentThread of commentThreads) {
             console.log(commentThread);
