@@ -327,7 +327,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
         for (let commentThread of commentThreads) {
             console.log(commentThread);
             // 댓글 작성자 정보 추출
-            let authorName = await commentThread.findElement(By.id('text')).getText();
+            let authorName = await commentThread.findElement(By.id('author-text')).getText();
             
             // 댓글 텍스트 추출
             let commentText = await commentThread.findElement(By.id('content-text')).getText();
