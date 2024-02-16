@@ -324,6 +324,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
         // 'ytd-comment-thread-renderer'를 기준으로 댓글 정보 추출
         let commentThreads = await driver.findElements(By.tagName('ytd-comment-thread-renderer'));
         for (let commentThread of commentThreads) {
+            console.log(commentThread);
             // 댓글 작성자 정보 추출
             let authorName = await commentThread.findElement(By.id('text')).getText();
             
