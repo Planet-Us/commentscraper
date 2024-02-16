@@ -309,6 +309,10 @@ async function scrapeCommentsOnlyTen(videoUrl) {
     try {
         await driver.get(videoUrl);
         await driver.wait(until.elementLocated(By.tagName('body')), 10000);
+        // 시간 제한을 위한 시작 시간
+        const startTime = new Date().getTime();
+        // 최대 대기 시간 (예: 30초)
+        const maxWaitTime = 30000;
 
         let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
         console.log("lastHeight is " + lastHeight);
@@ -317,6 +321,11 @@ async function scrapeCommentsOnlyTen(videoUrl) {
             await driver.sleep(1000);
             let newHeight = await driver.executeScript('return document.documentElement.scrollHeight');
             console.log("newHeight is " + newHeight);
+            // 시간 제한 확인
+            if (new Date().getTime() - startTime > maxWaitTime) {
+                console.log("시간 제한 도달");
+                break;
+            }
             if (newHeight === lastHeight) {
                 break;
             }
