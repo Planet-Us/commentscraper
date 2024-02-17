@@ -5,6 +5,8 @@ const puppeteer = require('puppeteer');
 const express = require('express');
 const functions = require('firebase-functions');
 const cors = require('cors');
+const {ipfsUploadFile} = require("./ipfsUpload.js");
+const converter = require('json-2-csv');
 // const chromium = require('chrome-aws-lambda');
 // const puppeteer = require('puppeteer-core');
 
@@ -19,7 +21,7 @@ app.get('/getComments', async (req, res) => {
 
 app.get('/getComment', async (req, res) => {
     console.log(req.query);
-    const result = await scrapeComments(req.query.searchText);
+    const result = await scrapeComments(req.query.searchText, req.query.userName);
     res.send(result);
 });
 
@@ -210,94 +212,65 @@ await browser.close();
 return videoLinks;
 }
 
-async function scrapeComments(videoUrl) {
+async function scrapeComments(videoUrl, userName) {
     let driver = await new Builder()
         .forBrowser('chrome')
-        .setChromeOptions(new chrome.Options().headless()) // 여기를 수정
+        .setChromeOptions(new chrome.Options().headless())
         .build();
 
-let count = 0;
-let results = new Array();
-try {
-    // YouTube 동영상 페이지로 이동
-    await driver.get(videoUrl);
+    let results = [];
+    try {
+        await driver.get(videoUrl);
+        await driver.wait(until.elementLocated(By.tagName('body')), 10000);
+        // 시간 제한을 위한 시작 시간
+        const startTime = new Date().getTime();
+        // 최대 대기 시간 (예: 30초)
+        const maxWaitTime = 900000;
 
-    // 페이지가 로드될 때까지 기다림
-    await driver.wait(until.elementLocated(By.tagName('body')), 10000);
-
-    // 스크롤 다운하여 댓글을 더 로드
-    let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
-    while (true) {
-        await driver.executeScript('window.scrollTo(0, document.documentElement.scrollHeight);');
-        await driver.sleep(1000); // 기다리는 시간은 상황에 따라 조정
-        let newHeight = await driver.executeScript('return document.documentElement.scrollHeight');
-        if (newHeight === lastHeight) {
-            break;
+        let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
+        console.log("lastHeight is " + lastHeight);
+        while (true) {
+            await driver.executeScript('window.scrollTo(0, document.documentElement.scrollHeight);');
+            await driver.sleep(1000);
+            let newHeight = await driver.executeScript('return document.documentElement.scrollHeight');
+            console.log("newHeight is " + newHeight);
+            // 시간 제한 확인
+            if (new Date().getTime() - startTime > maxWaitTime) {
+                console.log("시간 제한 도달");
+                break;
+            }
+            if (newHeight === lastHeight) {
+                break;
+            }
+            lastHeight = newHeight;
         }
-        lastHeight = newHeight;
+
+        // 'ytd-comment-thread-renderer'를 기준으로 댓글 정보 추출
+        let comments = await driver.findElements(By.id('content-text'));
+        let authorNames = await driver.findElements(By.id('author-text'));
+        console.log(comments.length);
+        console.log(authorNames.length);
+        for (let i = 0;i<comments.length;i++) {
+            let commentText = await comments[i].getText();
+            let author = await authorNames[i].getText();
+            console.log(commentText);
+            console.log(author);
+            results.push({author: author, comment: commentText});
+            console.log(results.length);
+            console.log(commentText);
+        }
+    } finally {
+        console.log(`Extracted ${results.length} comments.`);
+        await driver.quit();
+        converter.json2csv(JSON.parse(results), (err, csv) => {
+            if (err) {
+                throw err;
+            }
+            fs.writeFileSync('result_' + userName  + getToday().toString + '.csv', csv);
+        });        
+        return results;
     }
-
-    // 댓글 추출
-    let comments = await driver.findElements(By.id('content-text'));
-    for (let comment of comments) {
-        let commentText = await comment.getText();
-        results.push(commentText);
-        count++;
-        // console.log(commentText);
-    }
-} finally {
-    // 드라이버 종료
-    console.log(count);
-    
-    await driver.quit();
-    return results;
 }
-}
-
-// async function scrapeCommentsOnlyTen(videoUrl) {
-//     let driver = await new Builder()
-//         .forBrowser('chrome')
-//         .setChromeOptions(new chrome.Options().headless()) // 여기를 수정
-//         .build();
-
-// let count = 0;
-// let results = new Array();
-// try {
-//     // YouTube 동영상 페이지로 이동
-//     await driver.get(videoUrl);
-
-//     // 페이지가 로드될 때까지 기다림
-//     await driver.wait(until.elementLocated(By.tagName('body')), 10000);
-
-//     // 스크롤 다운하여 댓글을 더 로드
-//     let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
-//     while (true) {
-//         await driver.executeScript('window.scrollTo(0, document.documentElement.scrollHeight);');
-//         await driver.sleep(1000); // 기다리는 시간은 상황에 따라 조정
-//         let newHeight = await driver.executeScript('return document.documentElement.scrollHeight');
-//         if (newHeight === lastHeight) {
-//             break;
-//         }
-//         lastHeight = newHeight;
-//     }
-
-//     // 댓글 추출
-//     let comments = await driver.findElements(By.id('content-text'));
-//     for (let comment of comments) {
-//         let commentText = await comment.getText();
-//         results.push(commentText);
-//         count++;
-//         if(count >= 100) break;
-//         // console.log(commentText);
-//     }
-// } finally {
-//     // 드라이버 종료
-//     console.log(count);
-    
-//     await driver.quit();
-//     return results;
-// }
-// }
 
 async function scrapeCommentsOnlyTen(videoUrl) {
     let driver = await new Builder()
@@ -312,7 +285,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
         // 시간 제한을 위한 시작 시간
         const startTime = new Date().getTime();
         // 최대 대기 시간 (예: 30초)
-        const maxWaitTime = 30000;
+        const maxWaitTime = 20000;
 
         let lastHeight = await driver.executeScript('return document.documentElement.scrollHeight');
         console.log("lastHeight is " + lastHeight);
@@ -349,24 +322,19 @@ async function scrapeCommentsOnlyTen(videoUrl) {
             if(count >= 100) {break;}
             console.log(commentText);
         }
-        // let commentThreads = await driver.findElements(By.id('ytd-comment-renderer'));
-        // console.log(commentThreads.length);
-        // for (let commentThread of commentThreads) {
-        //     console.log(commentThread);
-        //     // 댓글 작성자 정보 추출
-        //     let authorName = await commentThread.findElement(By.id('author-text')).getText();
-            
-        //     // 댓글 텍스트 추출
-        //     let commentText = await commentThread.findElement(By.id('content-text')).getText();
-
-        //     results.push({author: authorName, comment: commentText});
-        //     if(results.length >= 10) break; // 최대 10개의 댓글만 추출
-        // }
     } finally {
         console.log(`Extracted ${results.length} comments.`);
         await driver.quit();
         return results;
     }
+}
+function getToday(){
+    var date = new Date();
+    var year = date.getFullYear();
+    var month = ("0" + (1 + date.getMonth())).slice(-2);
+    var day = ("0" + date.getDate()).slice(-2);
+
+    return year + month + day;
 }
 
 // exports.api = functions.https.onRequest(app);
