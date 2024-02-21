@@ -5,10 +5,21 @@ const puppeteer = require('puppeteer');
 const express = require('express');
 const functions = require('firebase-functions');
 const cors = require('cors');
-const {ipfsUploadFile} = require("./ipfsUpload.js");
+// const {ipfsUploadMetadata} = require("./ipfsUpload.js");
 const converter = require('json-2-csv');
-// const chromium = require('chrome-aws-lambda');
-// const puppeteer = require('puppeteer-core');
+const { appendFileSync, fstat, createReadStream, writeFileSync } = require('fs');
+const { NFTStorage, Blob } = require("nft.storage");
+const keccak256 = require('keccak256');
+const nodemailer = require('nodemailer');
+var admin = require("firebase-admin");
+var serviceAccount = require("./serviceAccountKey.json");
+require('dotenv').config();
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+
+  const db = admin.firestore();
 
 const app = express();
 app.use(cors());
@@ -19,10 +30,12 @@ app.get('/getComments', async (req, res) => {
     res.send(result);
 });
 
-app.get('/getComment', async (req, res) => {
+app.post('/getComment', async (req, res) => {
     console.log(req.query);
-    const result = await scrapeComments(req.query.searchText, req.query.userName);
-    res.send(result);
+    // console.log(req);
+    const result = scrapeComments(req.query.searchText, req.query.userName);
+    
+    res.send(true);
 });
 
 app.get('/getCommentTemp', async (req, res) => {
@@ -31,18 +44,22 @@ app.get('/getCommentTemp', async (req, res) => {
     res.send(result);
 });
 
+app.get('/sendNewPass', async (req, res) => {
+    console.log(req.query);
+    const result = await sendNewPassword(req.query.email);
+    res.send(result);
+});
+
 app.get('/', async (req, res) => {
     res.send("hello");
 });
 
-const server = app.listen(process.env.PORT || '3000', () => {
+const server = app.listen(process.env.PORT || '3001', () => {
     console.log('server listening on port %s', server.address().port);
 });
 
 const getYTComment = async (ytSearch) =>{
     let tempComments = new Array();
-    let tempVideoURLs = new Array();
-    let channelId = "UCeAQsCuhMxAowmOa_Rl1oTw";
     let videoIds = new Array();
     // youtube data api 안쓰고 채널명으로 검색해서 채널 id를 가져온 후, 비디오 링크 가져오기
     await getTopYouTubeChannel(ytSearch).then(async (channelId) => {
@@ -212,6 +229,15 @@ await browser.close();
 return videoLinks;
 }
 
+const CsvFile = (author, comment, userName) => {
+    const csv = `${author},${comment}\n`; // Construct a CSV row
+    try {
+        appendFileSync('./result_' + userName  + getToday().toString() + '.csv', csv); // Append the CSV row to the file
+    } catch (error) {
+        console.log(error);
+    }
+};
+
 async function scrapeComments(videoUrl, userName) {
     let driver = await new Builder()
         .forBrowser('chrome')
@@ -219,6 +245,7 @@ async function scrapeComments(videoUrl, userName) {
         .build();
 
     let results = [];
+    var json_data = '[';
     try {
         await driver.get(videoUrl);
         await driver.wait(until.elementLocated(By.tagName('body')), 10000);
@@ -249,26 +276,125 @@ async function scrapeComments(videoUrl, userName) {
         let comments = await driver.findElements(By.id('content-text'));
         let authorNames = await driver.findElements(By.id('author-text'));
         console.log(comments.length);
-        console.log(authorNames.length);
+        console.log(authorNames.length); 
         for (let i = 0;i<comments.length;i++) {
             let commentText = await comments[i].getText();
             let author = await authorNames[i].getText();
-            console.log(commentText);
-            console.log(author);
-            results.push({author: author, comment: commentText});
-            console.log(results.length);
-            console.log(commentText);
+            // console.log(author);
+            if(commentText.search('\\n') != -1){
+                let tempComment = await commentText.split("\n").join("");
+                commentText = tempComment;
+            }
+            if(commentText.search("\"") != -1){
+                let tempComment = await commentText.replaceAll("\"","");
+                commentText = tempComment;
+            }
+            results.push({"author": author, "comment": commentText});
+            json_data = json_data + '{"author" : "' + author + '", "comment" : "' + commentText + '"}';
+            if(i != comments.length -1){
+                json_data = json_data + ',';
+            }
+            // console.log(results.length);
+            // console.log(commentText);
         }
+        json_data = json_data + ']';
     } finally {
         console.log(`Extracted ${results.length} comments.`);
         await driver.quit();
-        converter.json2csv(JSON.parse(results), (err, csv) => {
-            if (err) {
-                throw err;
-            }
-            fs.writeFileSync('result_' + userName  + getToday().toString + '.csv', csv);
-        });        
+        try {
+            let csvData = "`Author, Comment\\n`";
+            
+            JSON.parse(json_data).forEach((data, index) => {
+                const { author, comment } = data; // Destructure contact properties
+                csvData = csvData + `${author},${comment}\n`
+            });
+            writeFileSync('./result_' + userName + '_' + getToday().toString() + '.csv', '\uFEFF' + csvData); 
+
+            // const uploadFile = createReadStream('./result_' + userName  + getToday().toString() + '.csv',{encoding: 'utf-8'});
+            // const tokenURI = await ipfsUploadFile(uploadFile);
+            // console.log(tokenURI);
+            const mailText = "<h3>hello, " + userName + "!</h3><br/><br/>" + "<h3>This mail sent from YTScrape and your request file is attached below. </h3><br/><br/> <h3>Thank you for using our service.</h3><br/><br/> YTScrape"
+            console.log(process.env.GMAIL_MAIL);
+            var mailOptions = {
+                from: process.env.GMAIL_MAIL,
+                to: userName,
+                subject: '[YTScrape]Your comment file',
+                html: mailText,
+                attachments: [{
+                    filename: 'result_' + userName  + '_' +  getToday().toString() + '.csv', // file name
+                    path: './result_' + userName  + '_' +  getToday().toString() + '.csv' // file path
+                }]
+            };
+            
+            transporter.sendMail(mailOptions, async function(error, info){
+                if(error){
+                    console.log(error);
+                }
+                
+                var accountDB = await db.collection('account');
+                var temp = await accountDB.doc(userName).get().then(async function(res) {
+                    await accountDB.doc(userName).set({
+                        credit: parseInt(res.data().credit)-1
+                    }, {merge: true})
+                });
+            });
+            
+            console.log('CSV creation successful!');
+        } catch (error) {
+            console.log('Error fetching or processing data:', error);
+        }
+        // await converter.json2csv(JSON.parse(json_data), async (err, csv) => {
+        //     console.log("0");
+        //     if (err) {
+        //         throw err;
+        //     }
+        //     console.log("1");
+        //     await fs.writeFileSync('./result_' + userName  + getToday().toString() + '.csv', csv);
+        //     await fs.writeFileSync('./result.csv', csv);
+        //     console.log('./result_' + userName  + getToday().toString() + '.csv');
+        // });        
         return results;
+    }
+}
+
+
+
+async function sendNewPassword(userName) {
+    var variable = "0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z".split(",");
+    var randomPassword = await createRandomPassword(variable, 8);
+    
+    const emailOptions = { // 옵션값 설정
+        from: process.env.GMAIL_MAIL,
+        to: userName,
+        subject: '[YTScrape]Your temporary password',
+          html: 
+          "<h1 >Hello, " + userName + "!" + "</h1> <h2> Your New Password : " + randomPassword + "</h2>"
+          +'<h3 style="color: crimson;">Once you sign in, you may change your password</h3>'
+          ,
+        };
+    transporter.sendMail(emailOptions, function(error, info){
+        if(error){
+            console.log(error);
+        }
+        console.log(info.response);
+    });
+    var accountDB = await db.collection('account');
+      var temp = await accountDB.doc(userName).get().then(async function(data) {
+        await accountDB.doc(userName).set({
+            password: randomPassword
+        }, {merge: true})
+        
+      });
+    return randomPassword;
+
+    //비밀번호 랜덤 함수
+    function createRandomPassword(variable, passwordLength) {
+        var randomString = "";
+        for (var j=0; j<passwordLength; j++) 
+        {
+            randomString += variable[Math.floor(Math.random()*variable.length)];
+        }
+        return randomString
     }
 }
 
@@ -336,5 +462,39 @@ function getToday(){
 
     return year + month + day;
 }
+
+
+async function ipfsUploadFile(files) {
+
+    // console.log(files)
+  
+    // const cid = await client.storeDirectory(files)
+    // console.log({ cid })
+  
+    // const arrayBuffer = reader.result;
+    console.log([files]);
+    const blob = new Blob([files], { type: 'text/csv' });
+  
+    const cid = await client.storeBlob(blob)
+    console.log(cid)
+  
+    const status = await client.status(cid)
+    console.log(status)
+    return status.cid;
+  
+  
+  
+  }
+
+  var transporter = nodemailer.createTransport({
+    port: 465,
+    secure: true,
+    service: 'gmail',
+    auth: {
+         user: process.env.GMAIL_MAIL,
+         pass: process.env.GMAIL_PASS
+    }
+});
+  
 
 // exports.api = functions.https.onRequest(app);

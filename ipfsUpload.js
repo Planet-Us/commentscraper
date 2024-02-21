@@ -29,7 +29,7 @@ const client = new NFTStorage({ token: API_KEY });
 
 
 
-export async function ipfsUploadFile(files) {
+async function ipfsUploadFile(files) {
 
   // console.log(files)
 
@@ -50,8 +50,7 @@ export async function ipfsUploadFile(files) {
 
 }
 
-
-export async function ipfsUploadMetadata(metadata) {
+async function ipfsUploadMetadata(metadata) {
 
   console.log(metadata);
 
@@ -59,7 +58,7 @@ export async function ipfsUploadMetadata(metadata) {
   // const content = new Blob(Buffer.from(metadata));
 
 
-  const blob = new Blob([JSON.stringify(metadata)], { type: 'text/json' });
+  const blob = new Blob([JSON.stringify(metadata)], { type: 'text/csv' });
   const cid = await client.storeBlob(blob);
   console.log(cid);
 
