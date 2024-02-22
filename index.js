@@ -22,12 +22,25 @@ admin.initializeApp({
   const db = admin.firestore();
 
 const app = express();
+const whitelist = ["http://localhost:3000", "http://localhost:8081"];
+
+const corsOptions = {
+  origin: function (origin, callback) { 
+    if (whitelist.indexOf(origin) !== -1) { // 만일 whitelist 배열에 origin인자가 있을 경우
+      callback(null, true); // cors 허용
+    } else {
+      callback(new Error("Not Allowed Origin!")); // cors 비허용
+    }
+  },
+};
+
+app.use(cors(corsOptions)); // 옵션을 추가한 CORS 미들웨어 추가
   
 //   app.use(cors({
 //     origin: '*', // 출처 허용 옵션
 //     // credential: 'true' // 사용자 인증이 필요한 리소스(쿠키 ..등) 접근
 // }));
-app.use(cors());
+// app.use(cors());
 // app.use(function(req, res, next) {
 //     res.header("Access-Control-Allow-Origin", "*");
 //     res.header('Access-Control-Allow-Methods', 'DELETE, PUT');
