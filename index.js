@@ -244,6 +244,11 @@ async function scrapeComments(videoUrl, userName) {
         .setChromeOptions(new chrome.Options().headless())
         .build();
 
+    let options = new chrome.Options();
+    options.addArguments("user-data-dir=/");
+    options.addArguments("disable-dev-shm-usage"); // 이 옵션은 공유 메모리 사용을 제한하여 리소스 문제를 완화할 수 있습니다.
+    options.headless(); // 헤드리스 모드를 사용하는 경우
+
     let results = [];
     var json_data = '[';
     try {
