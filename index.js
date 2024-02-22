@@ -33,7 +33,7 @@ app.get('/getComments', async (req, res) => {
     res.send(result);
 });
 
-app.post('/getComment', async (req, res) => {
+app.get('/getComment', async (req, res) => {
     console.log(req.query);
     // console.log(req);
     const result = scrapeComments(req.query.searchText, req.query.userName);
