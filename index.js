@@ -26,7 +26,7 @@ var corsOptions = {
     origin: "http://localhost:3000"
   };
   
-  app.use(cors(corsOptions));
+  app.use(cors());
 app.get('/getComments', async (req, res) => {
     console.log(req.query);
     const result = await getYTComment(req.query.searchText);
@@ -37,8 +37,17 @@ app.post('/getComment', async (req, res) => {
     console.log(req.query);
     // console.log(req);
     const result = scrapeComments(req.query.searchText, req.query.userName);
+    const response = {
+        statusCode: 200,
+        headers: {
+            "Access-Control-Allow-Headers" : "Content-Type",
+            "Access-Control-Allow-Origin": "http://localhost:3000/",
+            "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+        },
+        body: JSON.stringify('Hello from Lambda!'),
+    };
     
-    res.send(true);
+    res.send(response);
 });
 
 app.get('/getCommentTemp', async (req, res) => {
