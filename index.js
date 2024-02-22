@@ -26,10 +26,22 @@ var corsOptions = {
     origin: "http://localhost:3000"
   };
   
-  app.use(cors());
+  app.use(cors({
+    origin: '*', // 출처 허용 옵션
+    credential: 'true' // 사용자 인증이 필요한 리소스(쿠키 ..등) 접근
+}));
 app.get('/getComments', async (req, res) => {
     console.log(req.query);
     const result = await getYTComment(req.query.searchText);
+    
+    res.setHeader('Access-Control-Allow-origin', '*'); // 모든 출처(orogin)을 허용
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // 모든 HTTP 메서드 허용
+    res.setHeader('Access-Control-Allow-Credentials', 'true'); // 클라이언트와 서버 간에 쿠키 주고받기 허용
+
+    // ...
+
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('ok');
     res.send(result);
 });
 
@@ -37,17 +49,15 @@ app.get('/getComment', async (req, res) => {
     console.log(req.query);
     // console.log(req);
     const result = scrapeComments(req.query.searchText, req.query.userName);
-    const response = {
-        statusCode: 200,
-        headers: {
-            "Access-Control-Allow-Headers" : "Content-Type",
-            "Access-Control-Allow-Origin": "http://localhost:3000/",
-            "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-        },
-        body: JSON.stringify('Hello from Lambda!'),
-    };
     
-    res.send(response);
+    res.setHeader('Access-Control-Allow-origin', '*'); // 모든 출처(orogin)을 허용
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // 모든 HTTP 메서드 허용
+    res.setHeader('Access-Control-Allow-Credentials', 'true'); // 클라이언트와 서버 간에 쿠키 주고받기 허용
+
+    // ...
+
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('ok');
 });
 
 app.get('/getCommentTemp', async (req, res) => {
