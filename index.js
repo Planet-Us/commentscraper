@@ -22,8 +22,11 @@ admin.initializeApp({
   const db = admin.firestore();
 
 const app = express();
-app.use(cors());
-
+var corsOptions = {
+    origin: "http://localhost:3000"
+  };
+  
+  app.use(cors(corsOptions));
 app.get('/getComments', async (req, res) => {
     console.log(req.query);
     const result = await getYTComment(req.query.searchText);
