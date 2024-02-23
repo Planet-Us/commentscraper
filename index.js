@@ -67,14 +67,14 @@ app.get('/getComment', async (req, res) => {
     // console.log(req);
     const result = scrapeComments(req.query.searchText, req.query.userName);
     
-    // res.setHeader('Access-Control-Allow-origin', '*'); // 모든 출처(orogin)을 허용
-    // res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // 모든 HTTP 메서드 허용
-    // res.setHeader('Access-Control-Allow-Credentials', 'true'); // 클라이언트와 서버 간에 쿠키 주고받기 허용
+    res.setHeader('Access-Control-Allow-origin', '*'); // 모든 출처(orogin)을 허용
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // 모든 HTTP 메서드 허용
+    res.setHeader('Access-Control-Allow-Credentials', 'true'); // 클라이언트와 서버 간에 쿠키 주고받기 허용
 
-    // // ...
+    // ...
 
-    // res.writeHead(200, { 'Content-Type': 'text/plain' });
-    // res.end('ok');
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('ok');
     res.send(true);
 });
 
