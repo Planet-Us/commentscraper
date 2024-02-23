@@ -476,7 +476,7 @@ async function scrapeCommentsOnlyTen(videoUrl) {
                 console.log("시간 제한 도달");
                 break;
             }
-            if (newHeight > 130000) {
+            if (parseInt(newHeight) > 130000) {
                 break;
             }
             lastHeight = newHeight;
