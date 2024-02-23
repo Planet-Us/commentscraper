@@ -34,7 +34,7 @@ const corsOptions = {
   },
 };
 
-app.use(cors(corsOptions)); // 옵션을 추가한 CORS 미들웨어 추가
+app.use(cors()); // 옵션을 추가한 CORS 미들웨어 추가
   
 //   app.use(cors({
 //     origin: '*', // 출처 허용 옵션
