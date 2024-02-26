@@ -350,7 +350,7 @@ async function sendNewPassword(userName) {
     var accountDB = await db.collection('account');
       var temp = await accountDB.doc(userName).get().then(async function(data) {
         await accountDB.doc(userName).set({
-            password: randomPassword
+            password: keccak256(randomPassword).toString('hex')
         }, {merge: true})
         
       });
@@ -525,7 +525,7 @@ async function ipfsUploadFile(files) {
          pass: process.env.GMAIL_PASS
     }
 });
-module.exports = { scrapeComments, scrapeCommentsOnlyTen };
+module.exports = { scrapeComments, scrapeCommentsOnlyTen, sendNewPassword };
   
 
 // exports.api = functions.https.onRequest(app);

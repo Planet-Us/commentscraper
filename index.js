@@ -1,5 +1,5 @@
 const axios = require('axios');
-const {scrapeComments, scrapeCommentsOnlyTen} = require('./server.js');
+const {scrapeComments, scrapeCommentsOnlyTen, sendNewPassword} = require('./server.js');
 var admin = require("firebase-admin");
 var serviceAccount = require("./serviceAccountKey.json");
 
@@ -11,7 +11,27 @@ if (admin.apps.length === 0) {
   const db = admin.firestore();
 const regularExec = schedule.scheduleJob('0 * * * * *', async ()=>{ 
     getDB();
+    getPassChange();
 });
+
+async function getPassChange() {
+    
+    const requestTime = new Date().getTime().toString();
+    var requestDB = await db.collection('accountRequest');
+    var temp = await requestDB.get();
+    temp.docs.map(async (doc) => {
+        if(parseInt(doc.id) > parseInt(requestTime) - 200000){
+            console.log(doc.id);
+            if(doc.data().result == false){
+                await sendNewPassword(doc.data().email);
+                await requestDB.doc(doc.id).set({
+                    result: true
+                }, {merge: true})
+            }
+        }
+    });
+
+}
 
 async function getDB() {
     
