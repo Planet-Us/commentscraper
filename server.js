@@ -311,6 +311,19 @@ async function scrapeComments(videoUrl, userName) {
             console.log('CSV creation successful!');
         } catch (error) {
             console.log('Error fetching or processing data:', error);
+            
+            var mailOptions = {
+                from: process.env.GMAIL_MAIL,
+                to: userName,
+                subject: '[YTScrape]Server Shutdown',
+                html: "<h1>Server Shutdown!</h1>"
+            };
+            
+            transporter.sendMail(mailOptions, async function(error, info){
+                if(error){
+                    console.log(error);
+                }
+            });
         }
         // await converter.json2csv(JSON.parse(json_data), async (err, csv) => {
         //     console.log("0");
@@ -463,6 +476,19 @@ async function scrapeCommentsOnlyTen(videoUrl, userName) {
             console.log('CSV creation successful!');
         } catch (error) {
             console.log('Error fetching or processing data:', error);
+            
+            var mailOptions = {
+                from: process.env.GMAIL_MAIL,
+                to: userName,
+                subject: '[YTScrape]Server Shutdown',
+                html: "<h1>Server Shutdown!</h1>"
+            };
+            
+            transporter.sendMail(mailOptions, async function(error, info){
+                if(error){
+                    console.log(error);
+                }
+            });
         }
         // await converter.json2csv(JSON.parse(json_data), async (err, csv) => {
         //     console.log("0");
