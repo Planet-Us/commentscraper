@@ -458,13 +458,6 @@ async function scrapeCommentsOnlyTen(videoUrl, userName) {
                 if(error){
                     console.log(error);
                 }
-                
-                var accountDB = await db.collection('account');
-                var temp = await accountDB.doc(userName).get().then(async function(res) {
-                    await accountDB.doc(userName).set({
-                        credit: parseInt(res.data().credit)-1
-                    }, {merge: true})
-                });
             });
             
             console.log('CSV creation successful!');
