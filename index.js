@@ -17,6 +17,14 @@ const regularExec2 = schedule.scheduleJob('0 0 * * * *', async ()=>{
     sendHealthCheck();
 });
 
+const regularExec3 = schedule.scheduleJob('0 20 * * * *', async ()=>{ 
+    sendHealthCheck();
+});
+
+const regularExec4 = schedule.scheduleJob('0 40 * * * *', async ()=>{ 
+    sendHealthCheck();
+});
+
 async function getPassChange() {
     
     const requestTime = new Date().getTime().toString();
