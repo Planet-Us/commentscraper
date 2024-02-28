@@ -339,6 +339,25 @@ async function scrapeComments(videoUrl, userName) {
     }
 }
 
+async function sendHealthCheck() {
+    
+    const mailText = "<h1>Alive</h1>";
+    const startTime = new Date();
+    console.log(process.env.GMAIL_MAIL);
+    var mailOptions = {
+        from: process.env.GMAIL_MAIL,
+        to: process.env.GMAIL_MAIL,
+        subject: '[YTScrape]HealthCheck at '+startTime,
+        html: mailText
+    };
+    
+    transporter.sendMail(mailOptions, async function(error, info){
+        if(error){
+            console.log(error);
+        }
+    });
+}
+
 
 
 async function sendNewPassword(userName) {

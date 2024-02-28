@@ -1,5 +1,5 @@
 const axios = require('axios');
-const {scrapeComments, scrapeCommentsOnlyTen, sendNewPassword} = require('./server.js');
+const {scrapeComments, scrapeCommentsOnlyTen, sendNewPassword, sendHealthCheck} = require('./server.js');
 var admin = require("firebase-admin");
 var serviceAccount = require("./serviceAccountKey.json");
 
@@ -12,6 +12,9 @@ if (admin.apps.length === 0) {
 const regularExec = schedule.scheduleJob('0 * * * * *', async ()=>{ 
     getDB();
     getPassChange();
+});
+const regularExec2 = schedule.scheduleJob('0 0 * * * *', async ()=>{ 
+    sendHealthCheck();
 });
 
 async function getPassChange() {
